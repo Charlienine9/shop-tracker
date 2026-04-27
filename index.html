@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neil's Shop Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #00d4aa;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --text: #e8eaf6;
+    --text2: #8890b5;
+    --coop: #00a651;
+    --tesco: #ee1c24;
+    --iceland: #003da5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  header p {
+    font-size: 0.75rem;
+    color: var(--text2);
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    gap: 4px;
+  }
+
+  .tab {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .panel { display: none; padding: 16px; }
+  .panel.active { display: block; }
+
+  /* ADD ITEM */
+  .add-form {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .add-form h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .field { margin-bottom: 10px; }
+
+  label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text2);
+    margin-bottom: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  .price-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .price-col label { font-size: 0.65rem; }
+
+  .store-label-coop { color: var(--coop); }
+  .store-label-tesco { color: var(--tesco); }
+  .store-label-iceland { color: var(--iceland); }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary { background: var(--accent); color: #000; margin-top: 4px; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-danger { background: var(--accent2); color: #fff; padding: 6px 10px; font-size: 0.75rem; width: auto; border-radius: 6px; }
+
+  /* ITEMS LIST */
+  .items-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .item-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .item-card:hover { border-color: var(--accent); }
+
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px 8px;
+  }
+
+  .item-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .item-category {
+    font-size: 0.7rem;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .item-actions { display: flex; gap: 6px; align-items: center; }
+
+  .price-bars {
+    padding: 0 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .price-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .store-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    width: 56px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.5s ease;
+  }
+
+  .price-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .cheapest-tag {
+    font-size: 0.6rem;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .no-price { color: var(--text2); font-style: italic; }
+
+  /* SHOP MODE */
+  .shop-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .store-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .store-btn.coop.active { border-color: var(--coop); color: var(--coop); background: #00a65115; }
+  .store-btn.tesco.active { border-color: var(--tesco); color: var(--tesco); background: #ee1c2415; }
+  .store-btn.iceland.active { border-color: var(--iceland); color: var(--iceland); background: #003da515; }
+
+  .shop-item {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+  }
+
+  .shop-item.ticked {
+    opacity: 0.5;
+    border-color: var(--accent);
+  }
+
+  .shop-item.ticked .item-name { text-decoration: line-through; }
+
+  .shop-item-left { flex: 1; }
+
+  .shop-price {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .shop-price.no-price-shop {
+    font-size: 0.8rem;
+    color: var(--text2);
+  }
+
+  .shop-price.price-up { color: var(--accent2); }
+
+  .tick-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .tick-btn.ticked { background: var(--accent); border-color: var(--accent); }
+
+  .running-total {
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 2px solid var(--accent);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .total-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+  }
+
+  .total-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* UPDATE PRICE */
+  .update-section {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .update-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .change-log {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .change-entry {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    font-family: 'DM Mono', monospace;
+    border-left: 3px solid var(--accent3);
+  }
+
+  .change-entry .change-up { color: var(--accent2); }
+  .change-entry .change-down { color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text2);
+    font-size: 0.9rem;
+  }
+
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+  select option { background: #1a1d27; }
+
+  .category-chip {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .alt-hint {
+    font-size: 0.72rem;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .alt-hint span { color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛒 Neil's Shop Tracker</h1>
+  <p id="headerSub">Co-op · Tesco Express · Iceland</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('shop')">🛍 Shopping</div>
+  <div class="tab" onclick="switchTab('items')">📦 My Items</div>
+  <div class="tab" onclick="switchTab('add')">➕ Add Item</div>
+  <div class="tab" onclick="switchTab('update')">📈 Update Price</div>
+</div>
+
+<!-- SHOPPING TAB -->
+<div class="panel active" id="panel-shop">
+  <div class="shop-controls">
+    <button class="store-btn coop active" onclick="setStore('coop', this)">Co-op</button>
+    <button class="store-btn tesco" onclick="setStore('tesco', this)">Tesco</button>
+    <button class="store-btn iceland" onclick="setStore('iceland', this)">Iceland</button>
+  </div>
+  <div id="shopList"></div>
+  <div class="running-total">
+    <div>
+      <div class="total-label">Running Total</div>
+      <div style="font-size:0.72rem;color:var(--text2);font-family:'DM Mono',monospace" id="tickedCount">0 items ticked</div>
+    </div>
+    <div class="total-amount" id="runningTotal">£0.00</div>
+  </div>
+</div>
+
+<!-- MY ITEMS TAB -->
+<div class="panel" id="panel-items">
+  <div class="items-list" id="itemsList"></div>
+</div>
+
+<!-- ADD ITEM TAB -->
+<div class="panel" id="panel-add">
+  <div class="add-form">
+    <h2>Add New Item</h2>
+    <div class="field">
+      <label>Product Name</label>
+      <input type="text" id="newName" placeholder="e.g. Whole Milk 2pt">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select id="newCat">
+        <option>Dairy</option>
+        <option>Bread & Bakery</option>
+        <option>Meat & Fish</option>
+        <option>Fruit & Veg</option>
+        <option>Frozen</option>
+        <option>Tins & Packets</option>
+        <option>Drinks</option>
+        <option>Snacks</option>
+        <option>Household</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Current Prices (leave blank if not stocked)</label>
+      <div class="price-row">
+        <div class="price-col">
+          <label class="store-label-coop">Co-op £</label>
+          <input type="number" id="priceCoop" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="price-col">
+          <label class="store-label-tesco">Tesco £</label>
+          <input type="number" id="priceTesco" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="price-col">
+          <label class="store-label-iceland">Iceland £</label>
+          <input type="number" id="priceIceland" placeholder="0.00" step="0.01" min="0">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addItem()">Add to My List</button>
+  </div>
+</div>
+
+<!-- UPDATE PRICE TAB -->
+<div class="panel" id="panel-update">
+  <div class="update-section">
+    <h2>Update a Price</h2>
+    <div class="field">
+      <label>Product</label>
+      <select id="updateItem"></select>
+    </div>
+    <div class="field">
+      <label>Store</label>
+      <select id="updateStore">
+        <option value="coop">Co-op</option>
+        <option value="tesco">Tesco Express</option>
+        <option value="iceland">Iceland</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>New Price £</label>
+      <input type="number" id="updatePrice" placeholder="0.00" step="0.01" min="0">
+    </div>
+    <button class="btn btn-primary" onclick="updatePrice()">Save Price Change</button>
+  </div>
+  <div class="change-log" id="changeLog">
+    <div class="empty-state"><div class="icon">📊</div>Price changes will appear here</div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const STORE_NAMES = { coop: 'Co-op', tesco: 'Tesco', iceland: 'Iceland' };
+const STORE_COLORS = { coop: '#00a651', tesco: '#ee1c24', iceland: '#003da5' };
+
+let items = JSON.parse(localStorage.getItem('shopItems') || '[]');
+let priceHistory = JSON.parse(localStorage.getItem('priceHistory') || '[]');
+let ticked = {};
+let currentStore = 'coop';
+
+function save() {
+  localStorage.setItem('shopItems', JSON.stringify(items));
+  localStorage.setItem('priceHistory', JSON.stringify(priceHistory));
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const panels = ['shop','items','add','update'];
+  const idx = panels.indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'shop') renderShop();
+  if (name === 'items') renderItems();
+  if (name === 'update') renderUpdateDropdown();
+  if (name === 'update') renderChangeLog();
+}
+
+// ── ADD ITEM ──────────────────────────────────────────────────────────────
+function addItem() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { alert('Please enter a product name'); return; }
+  const item = {
+    id: Date.now(),
+    name,
+    category: document.getElementById('newCat').value,
+    prices: {
+      coop: parseFloat(document.getElementById('priceCoop').value) || null,
+      tesco: parseFloat(document.getElementById('priceTesco').value) || null,
+      iceland: parseFloat(document.getElementById('priceIceland').value) || null,
+    }
+  };
+  items.push(item);
+  save();
+  // reset
+  document.getElementById('newName').value = '';
+  document.getElementById('priceCoop').value = '';
+  document.getElementById('priceTesco').value = '';
+  document.getElementById('priceIceland').value = '';
+  alert(`"${name}" added! ✅`);
+}
+
+// ── ITEMS LIST ────────────────────────────────────────────────────────────
+function renderItems() {
+  const el = document.getElementById('itemsList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📦</div>No items yet — add some!</div>';
+    return;
+  }
+  const maxPrice = (item) => Math.max(...Object.values(item.prices).filter(v => v !== null));
+
+  el.innerHTML = items.map(item => {
+    const prices = item.prices;
+    const vals = Object.entries(prices).filter(([,v]) => v !== null);
+    const min = vals.length ? Math.min(...vals.map(([,v])=>v)) : null;
+    const max = vals.length ? maxPrice(item) : 1;
+
+    const bars = ['coop','tesco','iceland'].map(store => {
+      const p = prices[store];
+      if (p === null) return `<div class="price-bar">
+        <span class="store-badge" style="color:${STORE_COLORS[store]}">${STORE_NAMES[store]}</span>
+        <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:${STORE_COLORS[store]}"></div></div>
+        <span class="price-val no-price">—</span>
+      </div>`;
+      const pct = max > 0 ? (p/max)*100 : 100;
+      const cheapTag = p === min && vals.length > 1 ? '<span class="cheapest-tag">BEST</span>' : '';
+      return `<div class="price-bar">
+        <span class="store-badge" style="color:${STORE_COLORS[store]}">${STORE_NAMES[store]}</span>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${STORE_COLORS[store]}"></div></div>
+        <span class="price-val">£${p.toFixed(2)}</span>
+        ${cheapTag}
+      </div>`;
+    }).join('');
+
+    return `<div class="item-card">
+      <div class="item-header">
+        <div>
+          <div class="item-name">${item.name}</div>
+          <span class="category-chip">${item.category}</span>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-danger" onclick="deleteItem(${item.id})">✕</button>
+        </div>
+      </div>
+      <div class="price-bars">${bars}</div>
+    </div>`;
+  }).join('');
+}
+
+function deleteItem(id) {
+  if (!confirm('Remove this item?')) return;
+  items = items.filter(i => i.id !== id);
+  save();
+  renderItems();
+}
+
+// ── SHOP MODE ─────────────────────────────────────────────────────────────
+function setStore(store, btn) {
+  currentStore = store;
+  document.querySelectorAll('.store-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ticked = {};
+  renderShop();
+}
+
+function renderShop() {
+  const el = document.getElementById('shopList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🛒</div>Add items first, then shop!</div>';
+    updateTotal();
+    return;
+  }
+
+  el.innerHTML = items.map(item => {
+    const p = item.prices[currentStore];
+    const isTicked = ticked[item.id];
+
+    // find cheapest alternative
+    const alts = Object.entries(item.prices)
+      .filter(([s, v]) => s !== currentStore && v !== null)
+      .sort(([,a],[,b]) => a-b);
+    const cheapestAlt = alts[0];
+
+    let altHint = '';
+    if (p !== null && cheapestAlt && cheapestAlt[1] < p) {
+      const saving = (p - cheapestAlt[1]).toFixed(2);
+      altHint = `<div class="alt-hint">💡 Save <span>£${saving}</span> at ${STORE_NAMES[cheapestAlt[0]]}</div>`;
+    } else if (p === null && cheapestAlt) {
+      altHint = `<div class="alt-hint">Not stocked here — try <span>${STORE_NAMES[cheapestAlt[0]]} £${cheapestAlt[1].toFixed(2)}</span></div>`;
+    }
+
+    return `<div class="shop-item ${isTicked ? 'ticked' : ''}" id="shopitem-${item.id}">
+      <div class="shop-item-left">
+        <div class="item-name">${item.name}</div>
+        <span class="category-chip">${item.category}</span>
+        ${p !== null
+          ? `<div class="shop-price">£${p.toFixed(2)}</div>`
+          : `<div class="shop-price no-price-shop">Not stocked here</div>`}
+        ${altHint}
+      </div>
+      <button class="tick-btn ${isTicked ? 'ticked' : ''}" onclick="toggleTick(${item.id})">${isTicked ? '✓' : ''}</button>
+    </div>`;
+  }).join('');
+
+  updateTotal();
+}
+
+function toggleTick(id) {
+  ticked[id] = !ticked[id];
+  renderShop();
+}
+
+function updateTotal() {
+  let total = 0;
+  let count = 0;
+  items.forEach(item => {
+    if (ticked[item.id] && item.prices[currentStore] !== null) {
+      total += item.prices[currentStore];
+      count++;
+    }
+  });
+  document.getElementById('runningTotal').textContent = `£${total.toFixed(2)}`;
+  document.getElementById('tickedCount').textContent = `${count} item${count !== 1 ? 's' : ''} ticked`;
+}
+
+// ── UPDATE PRICE ──────────────────────────────────────────────────────────
+function renderUpdateDropdown() {
+  const sel = document.getElementById('updateItem');
+  sel.innerHTML = items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+}
+
+function updatePrice() {
+  const id = parseInt(document.getElementById('updateItem').value);
+  const store = document.getElementById('updateStore').value;
+  const newPrice = parseFloat(document.getElementById('updatePrice').value);
+  if (isNaN(newPrice) || newPrice < 0) { alert('Enter a valid price'); return; }
+
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const oldPrice = item.prices[store];
+  item.prices[store] = newPrice;
+
+  // log change
+  priceHistory.unshift({
+    date: new Date().toLocaleDateString('en-GB'),
+    name: item.name,
+    store,
+    old: oldPrice,
+    new: newPrice
+  });
+  if (priceHistory.length > 50) priceHistory.pop();
+
+  save();
+  renderChangeLog();
+  document.getElementById('updatePrice').value = '';
+  alert(`Price updated! ✅`);
+}
+
+function renderChangeLog() {
+  const el = document.getElementById('changeLog');
+  if (!priceHistory.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📊</div>Price changes will appear here</div>';
+    return;
+  }
+  el.innerHTML = priceHistory.map(c => {
+    const diff = c.old !== null ? (c.new - c.old) : null;
+    const diffStr = diff !== null
+      ? (diff > 0
+          ? `<span class="change-up">▲ +£${diff.toFixed(2)}</span>`
+          : diff < 0
+            ? `<span class="change-down">▼ £${diff.toFixed(2)}</span>`
+            : '<span>No change</span>')
+      : '<span>New price set</span>';
+    const oldStr = c.old !== null ? `£${c.old.toFixed(2)}` : 'N/A';
+    return `<div class="change-entry">
+      <strong>${c.name}</strong> @ ${STORE_NAMES[c.store]}<br>
+      ${c.date} · ${oldStr} → £${c.new.toFixed(2)} ${diffStr}
+    </div>`;
+  }).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+
+// Seed with some common items if empty
+if (!items.length) {
+  items = [
+    { id: 1, name: 'Whole Milk 2pt', category: 'Dairy', prices: { coop: 1.25, tesco: 1.10, iceland: 1.09 } },
+    { id: 2, name: 'White Bread 800g', category: 'Bread & Bakery', prices: { coop: 1.40, tesco: 1.30, iceland: null } },
+    { id: 3, name: 'Butter 250g', category: 'Dairy', prices: { coop: 2.20, tesco: 2.00, iceland: 1.89 } },
+  ];
+  save();
+}
+
+renderShop();
+renderUpdateDropdown();
+renderChangeLog();
+</script>
+</body>
+</html>
